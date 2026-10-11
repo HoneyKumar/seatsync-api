@@ -10,7 +10,15 @@ app.get('/', (req, res) => {
 });
 
 app.get('/events', (req, res) => {
-  res.json(events);
+  const { venue, sort } = req.query;
+  let results = [...events];
+  if (venue) {
+    results = results.filter((event) => event.venue.toLowerCase() === venue.toLowerCase());
+  }
+  if (sort && sort === 'price') {
+    results.sort((a, b) => a.price - b.price);
+  }
+  res.json(results);
 });
 
 app.get('/events/:id', (req, res) => {

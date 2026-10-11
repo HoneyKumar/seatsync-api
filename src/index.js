@@ -3,6 +3,8 @@ const app = express();
 
 const events = require('./data/events');
 
+const validateEvent = require('./validators/events.validator');
+
 app.use(express.json());
 
 app.get('/', (req, res) => {
@@ -15,7 +17,7 @@ app.get('/events', (req, res) => {
   if (venue) {
     results = results.filter((event) => event.venue.toLowerCase() === venue.toLowerCase());
   }
-  if (sort && sort === 'price') {
+  if (sort === 'price') {
     results.sort((a, b) => a.price - b.price);
   }
   res.json(results);
@@ -23,15 +25,19 @@ app.get('/events', (req, res) => {
 
 app.get('/events/:id', (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  const event = events.find((e) => e.id === eventId);
-  if (!event) {
+  const foundEvent = events.find((event) => event.id === eventId);
+  if (!foundEvent) {
     return res.status(404).json({ message: 'Event not found' });
   }
-  res.json(event);
+  res.json(foundEvent);
 });
 
 app.post('/events', (req, res) => {
-  const newId = events.length ? Math.max(...events.map((e) => e.id)) + 1 : 1;
+  const { isValid, message } = validateEvent(req.body);
+  if (!isValid) {
+    return res.status(400).json({ message });
+  }
+  const newId = events.length ? Math.max(...events.map((event) => event.id)) + 1 : 1;
   const { name, venue, date, totalSeats, price } = req.body;
   const newEvent = { id: newId, name, venue, date, totalSeats, price };
   events.push(newEvent);
@@ -39,9 +45,13 @@ app.post('/events', (req, res) => {
 });
 
 app.put('/events/:id', (req, res) => {
+  const { isValid, message } = validateEvent(req.body);
+  if (!isValid) {
+    return res.status(400).json({ message });
+  }
   const eventId = parseInt(req.params.id, 10);
 
-  const index = events.findIndex((e) => e.id === eventId);
+  const index = events.findIndex((event) => event.id === eventId);
   if (index === -1) {
     return res.status(404).json({ message: 'Event not found' });
   }
@@ -49,7 +59,7 @@ app.put('/events/:id', (req, res) => {
   const updatedEvent = { id: eventId, name, venue, date, totalSeats, price };
 
   events[index] = updatedEvent;
-  return res.json({ message: 'Event Updated', data: updatedEvent });
+  return res.json(updatedEvent);
 });
 
 app.delete('/events/:id', (req, res) => {

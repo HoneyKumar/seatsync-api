@@ -1,0 +1,20 @@
+{
+  "name": "seatsync-api",
+  "version": "1.0.0",
+  "description": "Event ticket booking API built with Node.js and Express",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": ["nodejs", "express", "rest-api", "booking"],
+  "author": "Honey Kumar",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

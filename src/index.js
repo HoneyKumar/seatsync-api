@@ -4,7 +4,9 @@ const app = express();
 const events = require('./data/events');
 
 const validateEvent = require('./validators/events.validator');
+const logger = require('./middleware/logger');
 
+app.use(logger);
 app.use(express.json());
 
 app.get('/', (req, res) => {

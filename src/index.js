@@ -75,10 +75,6 @@ app.delete('/events/:id', (req, res) => {
   return res.status(204).send();
 });
 
-app.get('/test-error', () => {
-  throw new Error('Something broke');
-});
-
 app.use((req, res) => {
   return res.status(404).json({ message: 'Route not found' });
 });

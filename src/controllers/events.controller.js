@@ -34,7 +34,7 @@ const createEvent = (req, res) => {
   res.status(201).json(newEvent);
 };
 
-const updatedEvent = (req, res) => {
+const updateEvent = (req, res) => {
   const { isValid, message } = validateEvent(req.body);
   if (!isValid) {
     return res.status(400).json({ message });
@@ -49,6 +49,7 @@ const updatedEvent = (req, res) => {
   const updatedEvent = { id: eventId, name, venue, date, totalSeats, price };
 
   events[index] = updatedEvent;
+  return res.json(updatedEvent);
 };
 
 const deleteEvent = (req, res) => {
@@ -61,4 +62,4 @@ const deleteEvent = (req, res) => {
   return res.status(204).send();
 };
 
-module.exports = { getAllEvents, getEventById, createEvent, updatedEvent, deleteEvent };
+module.exports = { getAllEvents, getEventById, createEvent, updateEvent, deleteEvent };

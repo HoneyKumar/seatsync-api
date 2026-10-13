@@ -5,6 +5,7 @@ const events = require('./data/events');
 
 const validateEvent = require('./validators/events.validator');
 const logger = require('./middleware/logger');
+const errorHandler = require('./middleware/errorHandler');
 
 app.use(logger);
 app.use(express.json());
@@ -73,6 +74,16 @@ app.delete('/events/:id', (req, res) => {
   events.splice(index, 1);
   return res.status(204).send();
 });
+
+app.get('/test-error', () => {
+  throw new Error('Something broke');
+});
+
+app.use((req, res) => {
+  return res.status(404).json({ message: 'Route not found' });
+});
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
 

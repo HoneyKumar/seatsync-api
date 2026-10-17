@@ -5,12 +5,12 @@ const pool = require('../config/db');
 const router = express.Router();
 
 router.get('/db', async (req, res) => {
-  let resut;
+  let result;
   try {
     result = await pool.query('SELECT Now() as time');
   } catch (err) {
     console.error('Database health check failed:', err.message);
-    res.status(503).json({ status: 'error', message: 'Database unreachable' });
+    return res.status(503).json({ status: 'error', message: 'Database unreachable' });
   }
   res.json({ status: 'ok', time: result.rows[0].time });
 });

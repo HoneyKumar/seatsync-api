@@ -1,17 +1,32 @@
 const events = require('../data/events');
-const validateEvent = require('../validators/events.validator');
+const { validateEvent, validateEventFilters } = require('../validators/events.validator');
 const eventsRepository = require('../repositories/events.repository');
 
 const { findAll, findById } = eventsRepository;
 
 const getAllEvents = async (req, res) => {
-  let results = await findAll();
+  const { venue, maxPrice, minPrice, from, to, search, city } = req.query;
+
+  const { isValid, message } = validateEventFilters({
+    maxPrice,
+    minPrice,
+    from,
+    to,
+  });
+  if (!isValid) {
+    return res.status(400).json({ message });
+  }
+  const results = await findAll({ venue, maxPrice, minPrice, from, to, search, city });
 
   res.json(results);
 };
 
 const getEventById = async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
+  const isValid = Number.isInteger(eventId) && eventId > 0;
+  if (!isValid) {
+    return res.status(400).json('id must be a positive whole number');
+  }
   const foundEvent = await findById(eventId);
 
   if (!foundEvent) {

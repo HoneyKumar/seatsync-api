@@ -8,6 +8,7 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

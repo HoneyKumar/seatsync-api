@@ -1,21 +1,19 @@
 const events = require('../data/events');
 const validateEvent = require('../validators/events.validator');
+const eventsRepository = require('../repositories/events.repository');
 
-const getAllEvents = (req, res) => {
-  const { venue, sort } = req.query;
-  let results = [...events];
-  if (venue) {
-    results = results.filter((event) => event.venue.toLowerCase() === venue.toLowerCase());
-  }
-  if (sort === 'price') {
-    results.sort((a, b) => a.price - b.price);
-  }
+const { findAll, findById } = eventsRepository;
+
+const getAllEvents = async (req, res) => {
+  let results = await findAll();
+
   res.json(results);
 };
 
-const getEventById = (req, res) => {
+const getEventById = async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
-  const foundEvent = events.find((event) => event.id === eventId);
+  const foundEvent = await findById(eventId);
+
   if (!foundEvent) {
     return res.status(404).json({ message: 'Event not found' });
   }

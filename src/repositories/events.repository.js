@@ -1,11 +1,14 @@
 const pool = require('../config/db');
 const { DEFAULT_LIMIT } = require('../constants/events');
 
+const FROM_EVENTS = `
+  FROM events AS e
+  INNER JOIN venues AS v ON v.id = e.venue_id`;
+
 const BASE_SELECT = `
   SELECT e.id, e.name, e.venue_id, e.starts_at, e.total_seats, e.price, e.created_at,
          v.name AS venue_name, v.city
-  FROM events AS e
-  INNER JOIN venues AS v ON v.id = e.venue_id`;
+  ${FROM_EVENTS}`;
 
 const SORT_COLUMNS = new Map([
   ['date', 'e.starts_at'],
@@ -72,18 +75,28 @@ const findAll = async (filters = {}) => {
   const orderBy = `ORDER BY ${column} ${direction}, e.id`;
 
   const whereQuery = values.length > 0 ? `where ${conditions.join(' AND ')}` : '';
-
+  const countResult = await pool.query(
+    `SELECT count(*) AS total ${FROM_EVENTS} ${whereQuery}`,
+    values
+  );
   values.push(limitNumber);
   const limitIndex = values.length;
 
   values.push(offset);
   const offsetIndex = values.length;
+
   const result = await pool.query(
     `${BASE_SELECT} ${whereQuery} ${orderBy} LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
     values
   );
 
-  return result.rows.map((row) => toEvent(row));
+  const total = Number(countResult.rows[0].total);
+  const totalPages = Math.ceil(total / limitNumber);
+
+  return {
+    data: result.rows.map((row) => toEvent(row)),
+    pagination: { page: pageNumber, limit: limitNumber, total, totalPages },
+  };
 };
 
 const findById = async (id) => {

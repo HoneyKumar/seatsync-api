@@ -69,7 +69,7 @@ const validateEventFilters = (filters = {}) => {
   }
 
   if (isProvided(page) && !isPositiveWholeNumber(page)) {
-    return { isValid: false, message: `page mubst be greater than or equal to 1` };
+    return { isValid: false, message: `page must be greater than or equal to 1` };
   }
   if (isProvided(limit) && (!isPositiveWholeNumber(limit) || Number(limit) > MAX_LIMIT)) {
     return { isValid: false, message: `limit must be a whole number between 1 and ${MAX_LIMIT}` };

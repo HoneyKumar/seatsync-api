@@ -20,7 +20,7 @@ const getAllEvents = async (req, res) => {
   if (!isValid) {
     return res.status(400).json({ message });
   }
-  const results = await findAll({
+  const { data, pagination } = await findAll({
     venue,
     maxPrice,
     minPrice,
@@ -34,7 +34,10 @@ const getAllEvents = async (req, res) => {
     limit,
   });
 
-  res.json(results);
+  res.json({
+    data,
+    pagination,
+  });
 };
 
 const getEventById = async (req, res) => {

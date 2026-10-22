@@ -6,6 +6,17 @@ const BASE_SELECT = `
   FROM events AS e
   INNER JOIN venues AS v ON v.id = e.venue_id`;
 
+const SORT_COLUMNS = new Map([
+  ['date', 'e.starts_at'],
+  ['price', 'e.price'],
+  ['name', 'e.name'],
+]);
+
+const SORT_DIRECTIONS = new Map([
+  ['asc', 'ASC'],
+  ['desc', 'DESC'],
+]);
+
 const toEvent = (row) => ({
   id: row.id,
   name: row.name,
@@ -19,7 +30,7 @@ const toEvent = (row) => ({
 });
 
 const findAll = async (filters = {}) => {
-  const { venue, maxPrice, minPrice, from, to, search, city } = filters;
+  const { venue, maxPrice, minPrice, from, to, search, city, sort, order } = filters;
   const conditions = [];
   const values = [];
   if (venue) {
@@ -51,9 +62,14 @@ const findAll = async (filters = {}) => {
     values.push(city);
     conditions.push(`lower(v.city) =lower($${values.length})`);
   }
+
+  const column = SORT_COLUMNS.get(sort) ?? 'e.starts_at';
+  const direction = SORT_DIRECTIONS.get(order) ?? 'ASC';
+  const orderBy = `ORDER BY ${column} ${direction}, e.id`;
+
   const whereQuery = values.length > 0 ? `where ${conditions.join(' AND ')}` : '';
 
-  const result = await pool.query(`${BASE_SELECT} ${whereQuery} ORDER BY e.id`, values);
+  const result = await pool.query(`${BASE_SELECT} ${whereQuery} ${orderBy}`, values);
 
   return result.rows.map((row) => toEvent(row));
 };

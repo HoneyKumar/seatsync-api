@@ -1,3 +1,5 @@
+const { SORT_FIELDS, SORT_DIRECTIONS } = require('../constants/events');
+
 const validateEvent = (body = {}) => {
   const { name, venue, totalSeats, date, price } = body;
   if (typeof name !== 'string' || name.trim() === '') {
@@ -15,13 +17,14 @@ const validateEvent = (body = {}) => {
   if (typeof price !== 'number' || price < 0) {
     return { isValid: false, message: 'price must be a non-negative number' };
   }
+
   return { isValid: true };
 };
 
 const isProvided = (value) => value !== undefined && value !== '';
 
 const validateEventFilters = (filters = {}) => {
-  const { minPrice, maxPrice, from, to } = filters;
+  const { minPrice, maxPrice, from, to, sort, order } = filters;
 
   if (isProvided(minPrice)) {
     const min = Number(minPrice);
@@ -51,6 +54,13 @@ const validateEventFilters = (filters = {}) => {
 
   if (isProvided(from) && isProvided(to) && new Date(from) > new Date(to)) {
     return { isValid: false, message: 'from cannot be later than to' };
+  }
+
+  if (isProvided(sort) && !SORT_FIELDS.includes(sort)) {
+    return { isValid: false, message: `sort must be one of: ${SORT_FIELDS.join(', ')}` };
+  }
+  if (isProvided(order) && !SORT_DIRECTIONS.includes(order)) {
+    return { isValid: false, message: `order must be one of: ${SORT_DIRECTIONS.join(', ')}` };
   }
 
   // venue, city and search are free text: any string is a valid search

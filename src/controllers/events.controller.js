@@ -5,18 +5,20 @@ const eventsRepository = require('../repositories/events.repository');
 const { findAll, findById } = eventsRepository;
 
 const getAllEvents = async (req, res) => {
-  const { venue, maxPrice, minPrice, from, to, search, city } = req.query;
+  const { venue, maxPrice, minPrice, from, to, search, city, sort, order } = req.query;
 
   const { isValid, message } = validateEventFilters({
     maxPrice,
     minPrice,
     from,
     to,
+    sort,
+    order,
   });
   if (!isValid) {
     return res.status(400).json({ message });
   }
-  const results = await findAll({ venue, maxPrice, minPrice, from, to, search, city });
+  const results = await findAll({ venue, maxPrice, minPrice, from, to, search, city, sort, order });
 
   res.json(results);
 };
@@ -25,7 +27,7 @@ const getEventById = async (req, res) => {
   const eventId = parseInt(req.params.id, 10);
   const isValid = Number.isInteger(eventId) && eventId > 0;
   if (!isValid) {
-    return res.status(400).json('id must be a positive whole number');
+    return res.status(400).json({ message: 'id must be a positive whole number' });
   }
   const foundEvent = await findById(eventId);
 

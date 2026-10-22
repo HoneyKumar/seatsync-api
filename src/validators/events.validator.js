@@ -1,18 +1,26 @@
 const { SORT_FIELDS, SORT_DIRECTIONS, MAX_LIMIT } = require('../constants/events');
 
+const isPositiveWholeNumber = (value) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0;
+};
+
 const validateEvent = (body = {}) => {
-  const { name, venue, totalSeats, date, price } = body;
+  const { name, venueId, totalSeats, startsAt, price } = body;
   if (typeof name !== 'string' || name.trim() === '') {
     return { isValid: false, message: 'name is required' };
   }
-  if (typeof venue !== 'string' || venue.trim() === '') {
-    return { isValid: false, message: 'venue is required' };
+  if (!isPositiveWholeNumber(venueId)) {
+    return { isValid: false, message: 'venueId must be a positive whole number' };
   }
   if (!Number.isInteger(totalSeats) || totalSeats <= 0) {
     return { isValid: false, message: 'totalSeats must be a positive whole number' };
   }
-  if (isNaN(new Date(date))) {
-    return { isValid: false, message: 'date must be a valid date' };
+  if (typeof startsAt !== 'string' || isNaN(new Date(startsAt))) {
+    return {
+      isValid: false,
+      message: 'startsAt must be a valid date-time, e.g. 2026-12-30T19:00:00+05:30',
+    };
   }
   if (typeof price !== 'number' || price < 0) {
     return { isValid: false, message: 'price must be a non-negative number' };
@@ -22,11 +30,6 @@ const validateEvent = (body = {}) => {
 };
 
 const isProvided = (value) => value !== undefined && value !== '';
-
-const isPositiveWholeNumber = (value) => {
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0;
-};
 
 const validateEventFilters = (filters = {}) => {
   const { minPrice, maxPrice, from, to, sort, order, page, limit } = filters;

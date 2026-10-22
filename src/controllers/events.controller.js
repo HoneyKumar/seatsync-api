@@ -2,7 +2,13 @@ const events = require('../data/events');
 const { validateEvent, validateEventFilters } = require('../validators/events.validator');
 const eventsRepository = require('../repositories/events.repository');
 
-const { findAll, findById } = eventsRepository;
+const { findAll, findById, create, update, remove } = eventsRepository;
+
+// Returns the id as a number, or null if it isn't a positive whole number
+const parseId = (value) => {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+};
 
 const getAllEvents = async (req, res) => {
   const { venue, maxPrice, minPrice, from, to, search, city, sort, order, page, limit } = req.query;
@@ -41,9 +47,8 @@ const getAllEvents = async (req, res) => {
 };
 
 const getEventById = async (req, res) => {
-  const eventId = parseInt(req.params.id, 10);
-  const isValid = Number.isInteger(eventId) && eventId > 0;
-  if (!isValid) {
+  const eventId = parseId(req.params.id);
+  if (!eventId) {
     return res.status(400).json({ message: 'id must be a positive whole number' });
   }
   const foundEvent = await findById(eventId);
@@ -54,43 +59,45 @@ const getEventById = async (req, res) => {
   res.json(foundEvent);
 };
 
-const createEvent = (req, res) => {
+const createEvent = async (req, res) => {
   const { isValid, message } = validateEvent(req.body);
   if (!isValid) {
     return res.status(400).json({ message });
   }
-  const newId = events.length ? Math.max(...events.map((event) => event.id)) + 1 : 1;
-  const { name, venue, date, totalSeats, price } = req.body;
-  const newEvent = { id: newId, name, venue, date, totalSeats, price };
-  events.push(newEvent);
+  const { name, venueId, startsAt, totalSeats, price } = req.body;
+  const newEvent = await create({ name, venueId, startsAt, totalSeats, price });
   res.status(201).json(newEvent);
 };
 
-const updateEvent = (req, res) => {
+const updateEvent = async (req, res) => {
   const { isValid, message } = validateEvent(req.body);
   if (!isValid) {
     return res.status(400).json({ message });
   }
-  const eventId = parseInt(req.params.id, 10);
+  const eventId = parseId(req.params.id);
+  if (!eventId) {
+    return res.status(400).json({ message: 'id must be a positive whole number' });
+  }
 
-  const index = events.findIndex((event) => event.id === eventId);
-  if (index === -1) {
+  const { name, venueId, startsAt, totalSeats, price } = req.body;
+  const updatedEvent = await update({ name, venueId, startsAt, totalSeats, price }, eventId);
+
+  if (!updatedEvent) {
     return res.status(404).json({ message: 'Event not found' });
   }
-  const { name, venue, date, totalSeats, price } = req.body;
-  const updatedEvent = { id: eventId, name, venue, date, totalSeats, price };
-
-  events[index] = updatedEvent;
   return res.json(updatedEvent);
 };
 
-const deleteEvent = (req, res) => {
-  const eventId = parseInt(req.params.id, 10);
-  const index = events.findIndex((event) => event.id === eventId);
-  if (index === -1) {
+const deleteEvent = async (req, res) => {
+  const eventId = parseId(req.params.id);
+  if (!eventId) {
+    return res.status(400).json({ message: 'id must be a positive whole number' });
+  }
+
+  const deleted = await remove(eventId);
+  if (!deleted) {
     return res.status(404).json({ message: 'Event not found' });
   }
-  events.splice(index, 1);
   return res.status(204).send();
 };
 

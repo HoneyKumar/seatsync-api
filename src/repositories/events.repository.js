@@ -104,4 +104,34 @@ const findById = async (id) => {
   return result.rows.length > 0 ? toEvent(result.rows[0]) : null;
 };
 
-module.exports = { findAll, findById };
+const create = async (event) => {
+  const { name, venueId, startsAt, totalSeats, price } = event;
+
+  const result = await pool.query(
+    `INSERT INTO events  (name,venue_id,starts_at,total_seats,price) VALUES($1, $2, $3, $4, $5) RETURNING id`,
+    [name, venueId, startsAt, totalSeats, price]
+  );
+  const newId = result.rows[0].id;
+  return findById(newId);
+};
+
+const update = async (event, id) => {
+  const { name, venueId, startsAt, totalSeats, price } = event;
+  const result = await pool.query(
+    `UPDATE events
+     SET name = $1, venue_id = $2, starts_at = $3, total_seats = $4, price = $5
+     WHERE id = $6`,
+    [name, venueId, startsAt, totalSeats, price, id]
+  );
+  if (result.rowCount === 0) {
+    return null; // no event with this id → controller sends 404
+  }
+  return findById(id);
+};
+
+const remove = async (id) => {
+  const result = await pool.query('DELETE FROM events WHERE id = $1', [id]);
+  return result.rowCount > 0; // true = deleted, false = no event with this id
+};
+
+module.exports = { findAll, findById, create, update, remove };

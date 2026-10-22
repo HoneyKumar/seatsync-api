@@ -5,7 +5,7 @@ const eventsRepository = require('../repositories/events.repository');
 const { findAll, findById } = eventsRepository;
 
 const getAllEvents = async (req, res) => {
-  const { venue, maxPrice, minPrice, from, to, search, city, sort, order } = req.query;
+  const { venue, maxPrice, minPrice, from, to, search, city, sort, order, page, limit } = req.query;
 
   const { isValid, message } = validateEventFilters({
     maxPrice,
@@ -14,11 +14,25 @@ const getAllEvents = async (req, res) => {
     to,
     sort,
     order,
+    page,
+    limit,
   });
   if (!isValid) {
     return res.status(400).json({ message });
   }
-  const results = await findAll({ venue, maxPrice, minPrice, from, to, search, city, sort, order });
+  const results = await findAll({
+    venue,
+    maxPrice,
+    minPrice,
+    from,
+    to,
+    search,
+    city,
+    sort,
+    order,
+    page,
+    limit,
+  });
 
   res.json(results);
 };

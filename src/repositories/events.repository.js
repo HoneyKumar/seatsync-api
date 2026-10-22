@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { DEFAULT_LIMIT } = require('../constants/events');
 
 const BASE_SELECT = `
   SELECT e.id, e.name, e.venue_id, e.starts_at, e.total_seats, e.price, e.created_at,
@@ -30,9 +31,12 @@ const toEvent = (row) => ({
 });
 
 const findAll = async (filters = {}) => {
-  const { venue, maxPrice, minPrice, from, to, search, city, sort, order } = filters;
+  const { venue, maxPrice, minPrice, from, to, search, city, sort, order, limit, page } = filters;
   const conditions = [];
   const values = [];
+  const limitNumber = Number(limit) || DEFAULT_LIMIT;
+  const pageNumber = Number(page) || 1;
+  const offset = (pageNumber - 1) * limitNumber;
   if (venue) {
     values.push(venue);
     conditions.push(`lower(v.name) = lower($${values.length})`);
@@ -69,7 +73,15 @@ const findAll = async (filters = {}) => {
 
   const whereQuery = values.length > 0 ? `where ${conditions.join(' AND ')}` : '';
 
-  const result = await pool.query(`${BASE_SELECT} ${whereQuery} ${orderBy}`, values);
+  values.push(limitNumber);
+  const limitIndex = values.length;
+
+  values.push(offset);
+  const offsetIndex = values.length;
+  const result = await pool.query(
+    `${BASE_SELECT} ${whereQuery} ${orderBy} LIMIT $${limitIndex} OFFSET $${offsetIndex}`,
+    values
+  );
 
   return result.rows.map((row) => toEvent(row));
 };

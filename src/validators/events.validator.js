@@ -1,4 +1,4 @@
-const { SORT_FIELDS, SORT_DIRECTIONS } = require('../constants/events');
+const { SORT_FIELDS, SORT_DIRECTIONS, MAX_LIMIT } = require('../constants/events');
 
 const validateEvent = (body = {}) => {
   const { name, venue, totalSeats, date, price } = body;
@@ -23,8 +23,13 @@ const validateEvent = (body = {}) => {
 
 const isProvided = (value) => value !== undefined && value !== '';
 
+const isPositiveWholeNumber = (value) => {
+  const n = Number(value);
+  return Number.isInteger(n) && n > 0;
+};
+
 const validateEventFilters = (filters = {}) => {
-  const { minPrice, maxPrice, from, to, sort, order } = filters;
+  const { minPrice, maxPrice, from, to, sort, order, page, limit } = filters;
 
   if (isProvided(minPrice)) {
     const min = Number(minPrice);
@@ -63,6 +68,12 @@ const validateEventFilters = (filters = {}) => {
     return { isValid: false, message: `order must be one of: ${SORT_DIRECTIONS.join(', ')}` };
   }
 
+  if (isProvided(page) && !isPositiveWholeNumber(page)) {
+    return { isValid: false, message: `page mubst be greater than or equal to 1` };
+  }
+  if (isProvided(limit) && (!isPositiveWholeNumber(limit) || Number(limit) > MAX_LIMIT)) {
+    return { isValid: false, message: `limit must be a whole number between 1 and ${MAX_LIMIT}` };
+  }
   // venue, city and search are free text: any string is a valid search
   return { isValid: true };
 };

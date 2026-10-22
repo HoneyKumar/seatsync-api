@@ -1,5 +1,5 @@
 const pool = require('../config/db');
-const { DEFAULT_LIMIT } = require('../constants/events');
+const { DEFAULT_LIMIT, FOREIGN_KEY_VIOLATION } = require('../constants/events');
 
 const FROM_EVENTS = `
   FROM events AS e
@@ -20,6 +20,12 @@ const SORT_DIRECTIONS = new Map([
   ['asc', 'ASC'],
   ['desc', 'DESC'],
 ]);
+
+const domainError = (code, message) => {
+  const err = new Error(message);
+  err.code = code;
+  return err;
+};
 
 const toEvent = (row) => ({
   id: row.id,
@@ -107,31 +113,56 @@ const findById = async (id) => {
 const create = async (event) => {
   const { name, venueId, startsAt, totalSeats, price } = event;
 
-  const result = await pool.query(
-    `INSERT INTO events  (name,venue_id,starts_at,total_seats,price) VALUES($1, $2, $3, $4, $5) RETURNING id`,
-    [name, venueId, startsAt, totalSeats, price]
-  );
-  const newId = result.rows[0].id;
-  return findById(newId);
+  let result;
+  try {
+    result = await pool.query(
+      `INSERT INTO events (name, venue_id, starts_at, total_seats, price)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id`,
+      [name, venueId, startsAt, totalSeats, price]
+    );
+  } catch (err) {
+    if (err.code === FOREIGN_KEY_VIOLATION) {
+      throw domainError('VENUE_NOT_FOUND', 'venueId does not exist');
+    }
+    throw err;
+  }
+  return findById(result.rows[0].id);
 };
 
 const update = async (event, id) => {
   const { name, venueId, startsAt, totalSeats, price } = event;
-  const result = await pool.query(
-    `UPDATE events
-     SET name = $1, venue_id = $2, starts_at = $3, total_seats = $4, price = $5
-     WHERE id = $6`,
-    [name, venueId, startsAt, totalSeats, price, id]
-  );
+  let result;
+  try {
+    result = await pool.query(
+      `UPDATE events
+       SET name = $1, venue_id = $2, starts_at = $3, total_seats = $4, price = $5
+       WHERE id = $6`,
+      [name, venueId, startsAt, totalSeats, price, id]
+    );
+  } catch (err) {
+    if (err.code === FOREIGN_KEY_VIOLATION) {
+      throw domainError('VENUE_NOT_FOUND', 'venueId does not exist');
+    }
+    throw err;
+  }
+
   if (result.rowCount === 0) {
-    return null; // no event with this id → controller sends 404
+    return null;
   }
   return findById(id);
 };
 
 const remove = async (id) => {
-  const result = await pool.query('DELETE FROM events WHERE id = $1', [id]);
-  return result.rowCount > 0; // true = deleted, false = no event with this id
+  try {
+    const result = await pool.query('DELETE FROM events WHERE id = $1', [id]);
+    return result.rowCount > 0;
+  } catch (err) {
+    if (err.code === FOREIGN_KEY_VIOLATION) {
+      throw domainError('EVENT_HAS_BOOKINGS', 'event has bookings and cannot be deleted');
+    }
+    throw err;
+  }
 };
 
 module.exports = { findAll, findById, create, update, remove };

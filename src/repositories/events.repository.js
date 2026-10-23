@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { withTransaction } = require('../config/transaction');
 const { DEFAULT_LIMIT, FOREIGN_KEY_VIOLATION } = require('../constants/events');
 
 const FROM_EVENTS = `
@@ -112,22 +113,29 @@ const findById = async (id) => {
 
 const create = async (event) => {
   const { name, venueId, startsAt, totalSeats, price } = event;
-
-  let result;
+  let newId;
   try {
-    result = await pool.query(
-      `INSERT INTO events (name, venue_id, starts_at, total_seats, price)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id`,
-      [name, venueId, startsAt, totalSeats, price]
-    );
+    newId = await withTransaction(async (client) => {
+      const result = await client.query(
+        `INSERT INTO events (name, venue_id, starts_at, total_seats, price)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id`,
+        [name, venueId, startsAt, totalSeats, price]
+      );
+      const id = result.rows[0].id;
+      await client.query(
+        'INSERT INTO seats (event_id, seat_number) SELECT $1, generate_series(1, $2)',
+        [id, totalSeats]
+      );
+      return id;
+    });
   } catch (err) {
     if (err.code === FOREIGN_KEY_VIOLATION) {
       throw domainError('VENUE_NOT_FOUND', 'venueId does not exist');
     }
     throw err;
   }
-  return findById(result.rows[0].id);
+  return findById(newId);
 };
 
 const update = async (event, id) => {

@@ -1,9 +1,5 @@
 const { SORT_FIELDS, SORT_DIRECTIONS, MAX_LIMIT } = require('../constants/events');
-
-const isPositiveWholeNumber = (value) => {
-  const n = Number(value);
-  return Number.isInteger(n) && n > 0;
-};
+const { isPositiveWholeNumber } = require('../utils/validation');
 
 const validateEvent = (body = {}) => {
   const { name, venueId, totalSeats, startsAt, price } = body;

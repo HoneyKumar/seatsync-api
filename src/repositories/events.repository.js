@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { withTransaction } = require('../config/transaction');
 const { DEFAULT_LIMIT, FOREIGN_KEY_VIOLATION } = require('../constants/events');
+const { domainError } = require('../utils/domainError');
 
 const FROM_EVENTS = `
   FROM events AS e
@@ -21,12 +22,6 @@ const SORT_DIRECTIONS = new Map([
   ['asc', 'ASC'],
   ['desc', 'DESC'],
 ]);
-
-const domainError = (code, message) => {
-  const err = new Error(message);
-  err.code = code;
-  return err;
-};
 
 const toEvent = (row) => ({
   id: row.id,

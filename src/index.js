@@ -3,6 +3,7 @@ const express = require('express');
 
 const eventRoutes = require('./routes/events.routes');
 const healthRoutes = require('./routes/health.routes');
+const bookingsRoutes = require('./routes/bookings.routes');
 const app = express();
 
 const logger = require('./middleware/logger');
@@ -18,6 +19,8 @@ app.get('/', (req, res) => {
 app.use('/events', eventRoutes);
 
 app.use('/health', healthRoutes);
+
+app.use('/bookings', bookingsRoutes);
 
 app.use((req, res) => {
   return res.status(404).json({ message: 'Route not found' });

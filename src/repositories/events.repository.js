@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const { withTransaction } = require('../config/transaction');
-const { DEFAULT_LIMIT, FOREIGN_KEY_VIOLATION } = require('../constants/events');
+const { DEFAULT_LIMIT } = require('../constants/events');
+const { FOREIGN_KEY_VIOLATION } = require('../constants/db');
 const { domainError } = require('../utils/domainError');
 
 const FROM_EVENTS = `

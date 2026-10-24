@@ -3,4 +3,9 @@ const isPositiveWholeNumber = (value) => {
   return Number.isInteger(n) && n > 0;
 };
 
-module.exports = { isPositiveWholeNumber };
+const isValidEmail = (value) => {
+  const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return pattern.test(value);
+};
+
+module.exports = { isPositiveWholeNumber, isValidEmail };
